@@ -23,7 +23,8 @@ export default function ProductCard({ kpi }: ProductCardProps) {
 
             {/* KPIs Grid */}
             <div className="p-6">
-                <div className="grid grid-cols-2 gap-4">
+                {/* Order Counts */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
                     {/* Total Commandes */}
                     <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
                         <p className="text-slate-400 text-sm mb-1">Total Commandes</p>
@@ -47,22 +48,31 @@ export default function ProductCard({ kpi }: ProductCardProps) {
                         <p className="text-slate-400 text-sm mb-1">Total Retour</p>
                         <p className="text-2xl font-bold text-red-400">{kpi.totalRetour}</p>
                     </div>
+                </div>
 
+                {/* Rate KPIs */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
                     {/* Taux de Confirmation */}
-                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                        <p className="text-slate-400 text-sm mb-1">Taux Confirmation</p>
-                        <p className="text-2xl font-bold text-amber-400">{formatPercent(kpi.tauxConfirmation)}</p>
+                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30 text-center">
+                        <p className="text-slate-400 text-xs mb-1">Taux Confirmation</p>
+                        <p className="text-xl font-bold text-amber-400">{formatPercent(kpi.tauxConfirmation)}</p>
                     </div>
 
                     {/* Taux de Livraison */}
-                    <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                        <p className="text-slate-400 text-sm mb-1">Taux Livraison</p>
-                        <p className="text-2xl font-bold text-purple-400">{formatPercent(kpi.tauxLivraison)}</p>
+                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30 text-center">
+                        <p className="text-slate-400 text-xs mb-1">Taux Livraison</p>
+                        <p className="text-xl font-bold text-purple-400">{formatPercent(kpi.tauxLivraison)}</p>
+                    </div>
+
+                    {/* Taux de Retour (NEW) */}
+                    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30 text-center">
+                        <p className="text-slate-400 text-xs mb-1">Taux Retour</p>
+                        <p className="text-xl font-bold text-rose-400">{formatPercent(kpi.tauxRetour)}</p>
                     </div>
                 </div>
 
                 {/* Financial Section */}
-                <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <div className="pt-4 border-t border-slate-700/50">
                     <div className="grid grid-cols-1 gap-3">
                         {/* Benfice Total */}
                         <div className="flex justify-between items-center bg-emerald-500/10 rounded-xl px-4 py-3 border border-emerald-500/20">

@@ -6,6 +6,7 @@ import { fetchAllProducts, fetchAdSpend, ProductData, AdSpendData } from '@/lib/
 import { calculateKPIs, ProductKPI } from '@/lib/kpi';
 import ProductCard from '@/components/ProductCard';
 import DateFilter from '@/components/DateFilter';
+import Navbar from '@/components/Navbar';
 
 const AUTH_KEY = 'ecom_dashboard_auth';
 
@@ -71,12 +72,6 @@ export default function DashboardPage() {
         setKpis(calculatedKpis);
     }, [products, adSpend, startDate, endDate]);
 
-    // Logout handler
-    const handleLogout = () => {
-        localStorage.removeItem(AUTH_KEY);
-        router.push('/');
-    };
-
     // Clear date filters
     const handleClearDates = () => {
         setStartDate('');
@@ -96,50 +91,8 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
-                                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-white">E-Commerce Dashboard</h1>
-                                {lastRefresh && (
-                                    <p className="text-sm text-slate-400">
-                                        Last updated: {lastRefresh.toLocaleTimeString()}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={fetchData}
-                                disabled={loading}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors disabled:opacity-50"
-                            >
-                                <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Refresh
-                            </button>
-                            <button
-                                onClick={handleLogout}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors border border-red-500/30"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            {/* Replaced Header with Navbar Component */}
+            <Navbar />
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -155,6 +108,15 @@ export default function DashboardPage() {
 
                 {/* Date Filter */}
                 <div className="mb-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                        <h2 className="text-2xl font-bold text-white">Overview</h2>
+                        {lastRefresh && (
+                            <p className="text-sm text-slate-400">
+                                Data updated: {lastRefresh.toLocaleTimeString()}
+                            </p>
+                        )}
+                    </div>
+
                     <DateFilter
                         startDate={startDate}
                         endDate={endDate}
@@ -215,6 +177,41 @@ export default function DashboardPage() {
                                     }`}>
                                     {new Intl.NumberFormat('fr-DZ').format(kpis.reduce((sum, k) => sum + k.benficeFinal, 0))} DZD
                                 </p>
+                            </div>
+                        </div>
+                        {/* Added: Global Metrics Average */}
+                        <div className="mt-4 pt-4 border-t border-slate-700/30">
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center">
+                                    <p className="text-xs text-slate-500">Global Shipping Rate</p>
+                                    <p className="text-lg font-bold text-blue-400">
+                                        {(() => {
+                                            const totalCmd = kpis.reduce((sum, k) => sum + k.totalCommandes, 0);
+                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
+                                            return totalCmd > 0 ? ((totalBase / totalCmd) * 100).toFixed(1) + '%' : '0%';
+                                        })()}
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs text-slate-500">Global Delivery Rate</p>
+                                    <p className="text-lg font-bold text-emerald-400">
+                                        {(() => {
+                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
+                                            const totalLivree = kpis.reduce((sum, k) => sum + k.totalLivree, 0);
+                                            return totalBase > 0 ? ((totalLivree / totalBase) * 100).toFixed(1) + '%' : '0%';
+                                        })()}
+                                    </p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs text-slate-500">Global Return Rate</p>
+                                    <p className="text-lg font-bold text-red-400">
+                                        {(() => {
+                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
+                                            const totalRetour = kpis.reduce((sum, k) => sum + k.totalRetour, 0);
+                                            return totalBase > 0 ? ((totalRetour / totalBase) * 100).toFixed(1) + '%' : '0%';
+                                        })()}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

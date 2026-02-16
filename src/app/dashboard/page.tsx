@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAllProducts, fetchAdSpend, ProductData, AdSpendData } from '@/lib/sheets';
+import { fetchAllProducts, fetchAdSpend, ProductData, AdSpendData, filterOrdersByDate } from '@/lib/sheets';
 import { calculateKPIs, ProductKPI } from '@/lib/kpi';
-import ProductCard from '@/components/ProductCard';
-import DateFilter from '@/components/DateFilter';
+import { getDailyStats, getGlobalStats, DailyStat, GlobalStats } from '@/lib/analytics';
 import Navbar from '@/components/Navbar';
+import DateFilter from '@/components/DateFilter';
+import SummaryCards from '@/components/SummaryCards';
+import DashboardCharts from '@/components/DashboardCharts';
+import AdSpendPanel from '@/components/AdSpendPanel';
+import ProductCard from '@/components/ProductCard';
 
 const AUTH_KEY = 'ecom_dashboard_auth';
 
@@ -14,11 +18,19 @@ export default function DashboardPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Data State
     const [products, setProducts] = useState<ProductData[]>([]);
     const [adSpend, setAdSpend] = useState<AdSpendData>({});
+
+    // Filter State
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+
+    // Derived State
     const [kpis, setKpis] = useState<ProductKPI[]>([]);
+    const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
+    const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
     // Check authentication
@@ -52,13 +64,23 @@ export default function DashboardPage() {
         fetchData();
     }, [fetchData]);
 
-    // Calculate KPIs whenever products, adSpend, or date filters change
+    // Calculate Aggregates & KPIs
     useEffect(() => {
         if (products.length === 0) return;
 
         const startDateObj = startDate ? new Date(startDate) : null;
         const endDateObj = endDate ? new Date(endDate) : null;
 
+        // 1. Prepare filtered data for Global Stats & Charts
+        const filteredProducts = products.map(p => ({
+            name: p.name,
+            orders: filterOrdersByDate(p.orders, startDateObj, endDateObj)
+        }));
+
+        setDailyStats(getDailyStats(filteredProducts));
+        setGlobalStats(getGlobalStats(filteredProducts, adSpend));
+
+        // 2. Calculate KPIs for individual Product Cards
         const calculatedKpis = products.map((product) =>
             calculateKPIs(
                 product.name,
@@ -72,160 +94,83 @@ export default function DashboardPage() {
         setKpis(calculatedKpis);
     }, [products, adSpend, startDate, endDate]);
 
-    // Clear date filters
-    const handleClearDates = () => {
-        setStartDate('');
-        setEndDate('');
-    };
-
     if (loading && products.length === 0) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                    <p className="text-slate-400">Loading dashboard data...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-slate-500 font-medium">Loading analytics...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            {/* Replaced Header with Navbar Component */}
+        <div className="min-h-screen bg-slate-50 pb-12">
             <Navbar />
 
-            {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Error Message */}
-                {error && (
-                    <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center gap-3 text-red-400">
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p>{error}</p>
-                    </div>
-                )}
+            {/* Main Layout */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* Date Filter */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
-                        <h2 className="text-2xl font-bold text-white">Overview</h2>
-                        {lastRefresh && (
-                            <p className="text-sm text-slate-400">
-                                Data updated: {lastRefresh.toLocaleTimeString()}
-                            </p>
-                        )}
+                {/* Top Controls (Overview Header & Refresh) */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
+                        <p className="text-slate-500 text-sm">
+                            {startDate && endDate
+                                ? `Showing data from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`
+                                : 'Showing all-time performance data'}
+                        </p>
                     </div>
 
-                    <DateFilter
-                        startDate={startDate}
-                        endDate={endDate}
-                        onStartDateChange={setStartDate}
-                        onEndDateChange={setEndDate}
-                        onClear={handleClearDates}
-                    />
+                    <div className="flex items-center gap-3">
+                        <DateFilter
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={setStartDate}
+                            onEndDateChange={setEndDate}
+                            onClear={() => { setStartDate(''); setEndDate(''); }}
+                        />
+                        <button
+                            onClick={fetchData}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200"
+                            title="Refresh Data"
+                        >
+                            <svg className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Products Grid */}
-                {kpis.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 1. Global Summary Cards */}
+                {globalStats && <SummaryCards stats={globalStats} />}
+
+                {/* 2. Charts Section & Ad Panel */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Chart (2/3 width) */}
+                    <div className="lg:col-span-2">
+                        <DashboardCharts data={dailyStats} />
+                    </div>
+
+                    {/* Ad Spend Panel (1/3 width) */}
+                    <div className="lg:col-span-1 h-full">
+                        {globalStats && <AdSpendPanel stats={globalStats} />}
+                    </div>
+                </div>
+
+                {/* 3. Product KPIs Grid */}
+                <div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        Product Performance
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {kpis.map((kpi) => (
                             <ProductCard key={kpi.productName} kpi={kpi} />
                         ))}
                     </div>
-                ) : (
-                    <div className="text-center py-12">
-                        <svg className="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                        </svg>
-                        <h3 className="text-xl font-semibold text-slate-400 mb-2">No Products Found</h3>
-                        <p className="text-slate-500">Could not load product data from Google Sheets.</p>
-                    </div>
-                )}
-
-                {/* Summary Stats */}
-                {kpis.length > 0 && (
-                    <div className="mt-8 bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6 shadow-xl">
-                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                            Summary (All Products)
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                                <p className="text-slate-400 text-sm mb-1">Total Orders</p>
-                                <p className="text-2xl font-bold text-white">
-                                    {kpis.reduce((sum, k) => sum + k.totalCommandes, 0)}
-                                </p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                                <p className="text-slate-400 text-sm mb-1">Total Delivered</p>
-                                <p className="text-2xl font-bold text-emerald-400">
-                                    {kpis.reduce((sum, k) => sum + k.totalLivree, 0)}
-                                </p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                                <p className="text-slate-400 text-sm mb-1">Total Returns</p>
-                                <p className="text-2xl font-bold text-red-400">
-                                    {kpis.reduce((sum, k) => sum + k.totalRetour, 0)}
-                                </p>
-                            </div>
-                            <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/30">
-                                <p className="text-slate-400 text-sm mb-1">Net Profit</p>
-                                <p className={`text-2xl font-bold ${kpis.reduce((sum, k) => sum + k.benficeFinal, 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
-                                    }`}>
-                                    {new Intl.NumberFormat('fr-DZ').format(kpis.reduce((sum, k) => sum + k.benficeFinal, 0))} DZD
-                                </p>
-                            </div>
-                        </div>
-                        {/* Added: Global Metrics Average */}
-                        <div className="mt-4 pt-4 border-t border-slate-700/30">
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="text-center">
-                                    <p className="text-xs text-slate-500">Global Shipping Rate</p>
-                                    <p className="text-lg font-bold text-blue-400">
-                                        {(() => {
-                                            const totalCmd = kpis.reduce((sum, k) => sum + k.totalCommandes, 0);
-                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
-                                            return totalCmd > 0 ? ((totalBase / totalCmd) * 100).toFixed(1) + '%' : '0%';
-                                        })()}
-                                    </p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-xs text-slate-500">Global Delivery Rate</p>
-                                    <p className="text-lg font-bold text-emerald-400">
-                                        {(() => {
-                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
-                                            const totalLivree = kpis.reduce((sum, k) => sum + k.totalLivree, 0);
-                                            return totalBase > 0 ? ((totalLivree / totalBase) * 100).toFixed(1) + '%' : '0%';
-                                        })()}
-                                    </p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-xs text-slate-500">Global Return Rate</p>
-                                    <p className="text-lg font-bold text-red-400">
-                                        {(() => {
-                                            const totalBase = kpis.reduce((sum, k) => sum + k.totalShiped + k.totalLivree + k.totalRetour, 0);
-                                            const totalRetour = kpis.reduce((sum, k) => sum + k.totalRetour, 0);
-                                            return totalBase > 0 ? ((totalRetour / totalBase) * 100).toFixed(1) + '%' : '0%';
-                                        })()}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </main>
-
-            {/* Footer */}
-            <footer className="mt-auto border-t border-slate-800 py-6">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <p className="text-center text-slate-500 text-sm">
-                        E-Commerce Analytics Dashboard • Data from Google Sheets
-                    </p>
                 </div>
-            </footer>
+
+            </div>
         </div>
     );
 }

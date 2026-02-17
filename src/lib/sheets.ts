@@ -16,9 +16,7 @@ export interface ProductData {
     orders: OrderRow[];
 }
 
-export interface AdSpendData {
-    [productName: string]: number;
-}
+
 
 // Sheet GIDs - we'll fetch these dynamically
 const SPREADSHEET_ID = '1o53MO3wXbs5-9RcsjW-VcEcFIXT9sgkQ8D-fIC_FIEU';
@@ -122,44 +120,60 @@ export async function fetchAllProducts(): Promise<ProductData[]> {
     return products;
 }
 
+// Ad Spend Row Structure
+export interface AdSpendRow {
+    product: string;
+    from: string; // YYYY-MM-DD
+    to: string;   // YYYY-MM-DD
+    amountDZD: number;
+}
+
 // Fetch ad spend data from DASH sheet
-export async function fetchAdSpend(): Promise<AdSpendData> {
+export async function fetchAdSpend(): Promise<AdSpendRow[]> {
     try {
         const csvText = await fetchSheetCSV('DASH');
         const rows = parseCSV(csvText);
 
-        const adSpend: AdSpendData = {};
+        const adSpend: AdSpendRow[] = [];
 
-        // Look for ad spend values - checking if columns K and L exist
-        // Column K = Product Name, Column L = Ad Spend
+        // Skip header
         for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
-            // Check columns K (index 10) and L (index 11)
-            if (row.length > 11 && row[10] && row[11]) {
-                const productName = row[10].trim();
-                const spend = parseFloat(row[11]) || 0;
-                if (productName) {
-                    adSpend[productName] = spend;
+            // Expecting: Product (A), From (B), To (C), Amount € (D), Amount DZD (E)
+            // csv parser array indices: 0, 1, 2, 3, 4
+
+            if (row.length >= 5) {
+                const product = row[0]?.trim();
+                const fromDate = row[1]?.trim();
+                const toDate = row[2]?.trim();
+                const amountDZD = parseFloat(row[4]) || 0;
+
+                if (product && fromDate && toDate) {
+                    // Normalize dates to YYYY-MM-DD for consistency
+                    // Assumes input might be DD/MM/YYYY or similar, so we use parseDate helper
+                    // but we store as string YYYY-MM-DD for simpler math later? 
+                    // Actually, let's keep them as strings but ensure they are standard.
+                    // Better to parse them into Date objects? No, let's keep simple struct.
+
+                    // We'll use parseDate helper to verify valid dates
+                    const fDate = parseDate(fromDate);
+                    const tDate = parseDate(toDate);
+
+                    if (fDate && tDate) {
+                        adSpend.push({
+                            product,
+                            from: fDate.toISOString().split('T')[0],
+                            to: tDate.toISOString().split('T')[0],
+                            amountDZD
+                        });
+                    }
                 }
             }
         }
-
-        // Default to 0 for products not found
-        for (const product of PRODUCT_SHEETS) {
-            if (!(product in adSpend)) {
-                adSpend[product] = 0;
-            }
-        }
-
         return adSpend;
     } catch (error) {
         console.error('Error fetching ad spend:', error);
-        // Return zeros for all products
-        const adSpend: AdSpendData = {};
-        for (const product of PRODUCT_SHEETS) {
-            adSpend[product] = 0;
-        }
-        return adSpend;
+        return [];
     }
 }
 

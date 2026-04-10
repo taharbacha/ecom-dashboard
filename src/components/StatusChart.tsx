@@ -38,7 +38,7 @@ export default function StatusChart({ data }: StatusChartProps) {
                             ))}
                         </Pie>
                         <Tooltip
-                            formatter={(value: any, name: string) => [`${value} orders`, name]}
+                            formatter={(value: any, name: string | undefined) => [`${value} orders`, name || '']}
                             contentStyle={{
                                 backgroundColor: '#fff',
                                 borderRadius: '0.75rem',

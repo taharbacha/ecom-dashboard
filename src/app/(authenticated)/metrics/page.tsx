@@ -1,23 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-
 export default function MetricsPage() {
-    const router = useRouter();
-
-    useEffect(() => {
-        const isAuth = localStorage.getItem('ecom_dashboard_auth');
-        if (isAuth !== 'true') {
-            router.push('/');
-        }
-    }, [router]);
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            <Navbar />
-
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="mb-10 text-center">
                     <h2 className="text-3xl font-bold text-white mb-4">How Metrics Work</h2>
@@ -117,7 +102,7 @@ export default function MetricsPage() {
                                 </div>
                                 <h3 className="text-lg font-bold text-white">Return Rate</h3>
                             </div>
-                            <p className="text-slate-400 mb-4 h-12">Measures refusal risk. High returns = wasted ad spend & shipping costs.</p>
+                            <p className="text-slate-400 mb-4 h-12">Measures refusal risk. High returns = wasted ad spend &amp; shipping costs.</p>
 
                             <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 font-mono text-sm text-red-200 mb-4">
                                 failed / (shiped + completed + failed)
@@ -151,6 +136,52 @@ export default function MetricsPage() {
                                 <p className="text-slate-300 text-sm">
                                     15,000 DZD Profit - 3,000 DZD Ads<br />
                                     <span className="text-amber-400 font-bold">Benfice Final = 12,000 DZD</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* CPA */}
+                        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-orange-500/10 rounded-lg text-orange-400">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-white">CPA (Cost Per Acquisition)</h3>
+                            </div>
+                            <p className="text-slate-400 mb-4 h-12">How much ad spend it takes to get one delivered order.</p>
+
+                            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 font-mono text-sm text-orange-200 mb-4">
+                                Ad Spend / Delivered Orders
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Example</p>
+                                <p className="text-slate-300 text-sm">
+                                    5,000 DZD Ads / 50 delivered<br />
+                                    <span className="text-orange-400 font-bold">CPA = 100 DZD</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* ROAS */}
+                        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-white">ROAS (Return on Ad Spend)</h3>
+                            </div>
+                            <p className="text-slate-400 mb-4 h-12">Revenue generated per unit of ad spend. Higher is better.</p>
+
+                            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 font-mono text-sm text-purple-200 mb-4">
+                                Total Revenue / Ad Spend
+                            </div>
+
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Example</p>
+                                <p className="text-slate-300 text-sm">
+                                    50,000 DZD Revenue / 5,000 DZD Ads<br />
+                                    <span className="text-purple-400 font-bold">ROAS = 10x</span>
                                 </p>
                             </div>
                         </div>

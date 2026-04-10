@@ -6,7 +6,9 @@ import {
     Truck,
     RotateCcw,
     DollarSign,
-    Package
+    Package,
+    Target,
+    Zap,
 } from 'lucide-react';
 import { GlobalStats } from '@/lib/analytics';
 import { formatCurrency, formatPercent } from '@/lib/kpi';
@@ -56,28 +58,53 @@ export default function SummaryCards({ stats }: SummaryCardsProps) {
             color: stats.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600',
             bgColor: stats.netProfit >= 0 ? 'bg-emerald-50' : 'bg-red-50',
             borderColor: stats.netProfit >= 0 ? 'border-emerald-100' : 'border-red-100',
-            colSpan: 'md:col-span-2 lg:col-span-1'
-        }
+        },
+        {
+            title: 'CPA',
+            value: formatCurrency(stats.cpa),
+            subtitle: 'Cost / Delivered Order',
+            icon: Target,
+            color: 'text-orange-600',
+            bgColor: 'bg-orange-50',
+            borderColor: 'border-orange-100'
+        },
+        {
+            title: 'ROAS',
+            value: stats.roas.toFixed(2) + 'x',
+            subtitle: 'Return on Ad Spend',
+            icon: Zap,
+            color: 'text-purple-600',
+            bgColor: 'bg-purple-50',
+            borderColor: 'border-purple-100'
+        },
+        {
+            title: 'AOV',
+            value: formatCurrency(stats.aov),
+            subtitle: 'Avg Order Value',
+            icon: BarChart3,
+            color: 'text-cyan-600',
+            bgColor: 'bg-cyan-50',
+            borderColor: 'border-cyan-100'
+        },
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {cards.map((card, index) => {
                 const Icon = card.icon;
                 return (
                     <div
                         key={index}
-                        className={`bg-white rounded-xl p-6 shadow-sm border ${card.borderColor} ${card.colSpan || ''} hover:shadow-md transition-shadow duration-200`}
+                        className={`bg-white rounded-xl p-5 shadow-sm border ${card.borderColor} hover:shadow-md transition-shadow duration-200`}
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-3 rounded-lg ${card.bgColor}`}>
-                                <Icon className={`w-6 h-6 ${card.color}`} />
+                        <div className="flex items-center justify-between mb-3">
+                            <div className={`p-2.5 rounded-lg ${card.bgColor}`}>
+                                <Icon className={`w-5 h-5 ${card.color}`} />
                             </div>
-                            {/* Optional Sparkline placeholder or small indicator could go here */}
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-500 mb-1">{card.title}</p>
-                            <h3 className={`text-2xl font-bold ${card.color}`}>{card.value}</h3>
+                            <p className="text-xs font-medium text-slate-400 mb-1">{card.title}</p>
+                            <h3 className={`text-xl font-bold ${card.color}`}>{card.value}</h3>
                         </div>
                     </div>
                 );

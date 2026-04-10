@@ -15,12 +15,33 @@ export interface GlobalStats {
     totalShipped: number;
     totalDelivered: number;
     totalReturned: number;
+    totalRevenue: number;
     totalProfit: number; // Sum of benficeNet
     totalAdSpend: number;
     netProfit: number; // totalProfit - totalAdSpend
     shippingRate: number;
     deliveryRate: number;
     returnRate: number;
+    cpa: number;
+    roas: number;
+    aov: number;
+}
+
+export interface WilayaStat {
+    wilaya: string;
+    count: number;
+    revenue: number;
+    profit: number;
+    delivered: number;
+    returned: number;
+}
+
+export interface StatusStat {
+    status: string;
+    label: string;
+    count: number;
+    percentage: number;
+    color: string;
 }
 
 /**
@@ -111,11 +132,6 @@ export function getDailyStats(
     });
 
     // 2. Process Ad Spend
-    // Iterate through all days in the map AND any days covered by ad spend
-    // Actually, we should iterate a date range covering all data.
-    // However, simplest is to iterate existing keys + add new keys for ad spend only days?
-    // Or just iterate ad spend rows and add to map.
-
     adSpendRows.forEach(row => {
         if (!isProductSelected(row.product, selectedProducts)) return;
 
@@ -174,6 +190,7 @@ export function getGlobalStats(
     let totalDelivered = 0;
     let totalReturned = 0;
     let totalProfit = 0;
+    let totalRevenue = 0;
     let totalAdSpend = 0;
 
     // 1. Sum up product stats
@@ -193,6 +210,9 @@ export function getGlobalStats(
         totalDelivered += orders.filter(o => o.status === 'completed').filter(Boolean).length;
         totalReturned += orders.filter(o => o.status === 'failed').filter(Boolean).length;
 
+        // Revenue
+        totalRevenue += orders.reduce((sum, o) => sum + o.prixDeVente, 0);
+
         // Profit
         const productProfit = orders
             .filter(o => o.status === 'completed')
@@ -208,9 +228,6 @@ export function getGlobalStats(
         const rowTo = new Date(row.to);
 
         // Determine overlap with selected range (startDate, endDate)
-        // If no range selected, we take full ad spend? 
-        // Usually "no range" means "all time".
-
         let overlapStart = rowFrom;
         let overlapEnd = rowTo;
 
@@ -248,16 +265,106 @@ export function getGlobalStats(
 
     const netProfit = totalProfit - totalAdSpend;
 
+    // Advanced KPIs
+    const cpa = totalDelivered > 0 ? totalAdSpend / totalDelivered : 0;
+    const roas = totalAdSpend > 0 ? totalRevenue / totalAdSpend : 0;
+    const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
     return {
         totalOrders,
         totalShipped,
         totalDelivered,
         totalReturned,
+        totalRevenue,
         totalProfit,
         totalAdSpend,
         netProfit,
         shippingRate,
         deliveryRate,
-        returnRate
+        returnRate,
+        cpa,
+        roas,
+        aov,
     };
+}
+
+/**
+ * Get order breakdown by wilaya (region)
+ */
+export function getWilayaBreakdown(orders: OrderRow[]): WilayaStat[] {
+    const map = new Map<string, WilayaStat>();
+
+    orders.forEach(order => {
+        const wilaya = order.wilaya?.trim() || 'Unknown';
+
+        if (!map.has(wilaya)) {
+            map.set(wilaya, { wilaya, count: 0, revenue: 0, profit: 0, delivered: 0, returned: 0 });
+        }
+
+        const stat = map.get(wilaya)!;
+        stat.count += 1;
+        stat.revenue += order.prixDeVente;
+
+        if (order.status === 'completed') {
+            stat.profit += order.benficeNet;
+            stat.delivered += 1;
+        } else if (order.status === 'failed') {
+            stat.returned += 1;
+        }
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Get order status distribution
+ */
+export function getStatusDistribution(orders: OrderRow[]): StatusStat[] {
+    const total = orders.length;
+    if (total === 0) return [];
+
+    const statusMap: Record<string, { label: string; count: number; color: string }> = {
+        'completed': { label: 'Delivered', count: 0, color: '#10b981' },
+        'shiped': { label: 'Shipped', count: 0, color: '#3b82f6' },
+        'failed': { label: 'Returned', count: 0, color: '#ef4444' },
+    };
+
+    // Count known statuses
+    let knownCount = 0;
+    orders.forEach(order => {
+        const status = order.status.toLowerCase();
+        if (statusMap[status]) {
+            statusMap[status].count += 1;
+            knownCount += 1;
+        }
+    });
+
+    // Pending/other = total - known
+    const pendingCount = total - knownCount;
+
+    const result: StatusStat[] = [];
+
+    if (pendingCount > 0) {
+        result.push({
+            status: 'pending',
+            label: 'Pending',
+            count: pendingCount,
+            percentage: (pendingCount / total) * 100,
+            color: '#f59e0b',
+        });
+    }
+
+    Object.entries(statusMap).forEach(([status, data]) => {
+        if (data.count > 0) {
+            result.push({
+                status,
+                label: data.label,
+                count: data.count,
+                percentage: (data.count / total) * 100,
+                color: data.color,
+            });
+        }
+    });
+
+    return result.sort((a, b) => b.count - a.count);
 }

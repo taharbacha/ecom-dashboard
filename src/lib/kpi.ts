@@ -14,9 +14,16 @@ export interface ProductKPI {
     returnRate: number;      // failed / (shiped + completed + failed) * 100
 
     // Financial KPIs
+    totalRevenue: number;    // Sum of prixDeVente for all orders
     benficeTotal: number;
     adSpend: number;
     benficeFinal: number;
+
+    // Advanced KPIs
+    cpa: number;             // Cost Per Acquisition = adSpend / delivered
+    roas: number;            // Return on Ad Spend = revenue / adSpend
+    aov: number;             // Average Order Value = totalRevenue / totalOrders
+    avgProfitPerOrder: number; // Average bénéfice per delivered order
 }
 
 /**
@@ -24,6 +31,9 @@ export interface ProductKPI {
  * - Shipping Rate: Operational progression
  * - Delivery Rate: True COD performance (most important)
  * - Return Rate: Refusal risk
+ * - CPA: Cost to acquire one delivered order
+ * - ROAS: Revenue generated per unit of ad spend
+ * - AOV: Average order value
  */
 export function calculateKPIs(
     productName: string,
@@ -63,11 +73,20 @@ export function calculateKPIs(
         : 0;
 
     // 💰 Financial KPIs
+    const totalRevenue = filteredOrders
+        .reduce((sum, o) => sum + o.prixDeVente, 0);
+
     const benficeTotal = filteredOrders
         .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + o.benficeNet, 0);
 
     const benficeFinal = benficeTotal - adSpend;
+
+    // 📊 Advanced KPIs
+    const cpa = totalLivree > 0 ? adSpend / totalLivree : 0;
+    const roas = adSpend > 0 ? totalRevenue / adSpend : 0;
+    const aov = totalCommandes > 0 ? totalRevenue / totalCommandes : 0;
+    const avgProfitPerOrder = totalLivree > 0 ? benficeTotal / totalLivree : 0;
 
     return {
         productName,
@@ -78,9 +97,14 @@ export function calculateKPIs(
         shippingRate,
         deliveryRate,
         returnRate,
+        totalRevenue,
         benficeTotal,
         adSpend,
         benficeFinal,
+        cpa,
+        roas,
+        aov,
+        avgProfitPerOrder,
     };
 }
 

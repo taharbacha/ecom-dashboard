@@ -22,7 +22,7 @@ export interface ProductData {
 const SPREADSHEET_ID = '1o53MO3wXbs5-9RcsjW-VcEcFIXT9sgkQ8D-fIC_FIEU';
 
 // Known sheet names (product sheets)
-const PRODUCT_SHEETS = ['Gant', 'Tenu De Travail', 'Gilet de securite', 'Gilet de travail'];
+const PRODUCT_SHEETS = ['gilet vert', 'Tenu De Travail', 'Gilet de securite', 'Gilet de travail'];
 
 // Parse CSV text into array of rows
 function parseCSV(csvText: string): string[][] {

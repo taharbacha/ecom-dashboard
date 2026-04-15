@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { PRODUCT_SHEETS } from '@/lib/sheets';
 import {
     LayoutDashboard,
+    List,
     Info,
     LogOut,
     Package,
@@ -79,6 +80,22 @@ export default function Sidebar() {
                 >
                     <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
                     {!collapsed && <span>Dashboard</span>}
+                </Link>
+
+                {/* All Orders */}
+                <Link
+                    href="/all-orders"
+                    className={`
+                        flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
+                        ${isActive('/all-orders')
+                            ? 'bg-blue-500/10 text-blue-400 shadow-sm'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                        }
+                    `}
+                    title="All Orders"
+                >
+                    <List className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span>All Orders</span>}
                 </Link>
 
                 {/* Products Section */}

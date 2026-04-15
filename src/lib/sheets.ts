@@ -136,9 +136,16 @@ export async function fetchAdSpend(): Promise<AdSpendRow[]> {
 
         const adSpend: AdSpendRow[] = [];
 
-        // Skip header
-        for (let i = 1; i < rows.length; i++) {
+        // Some sheets return headers via gviz, some don't depending on sheet format.
+        // We'll start at 0 and skip if it's clearly a header.
+        for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
+            
+            // Skip header if present
+            if (row[0] && row[0].toLowerCase().includes('product')) {
+                continue;
+            }
+
             // Expecting: Product (A), From (B), To (C), Amount € (D), Amount DZD (E)
             // csv parser array indices: 0, 1, 2, 3, 4
 

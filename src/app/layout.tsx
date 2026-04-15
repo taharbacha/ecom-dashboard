@@ -20,7 +20,10 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {children}
+        <div className="premium-bg" />
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

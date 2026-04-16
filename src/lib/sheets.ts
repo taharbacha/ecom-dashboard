@@ -1,5 +1,7 @@
-// Types for Google Sheets data
+// Types for Google Sheets data / Supabase
 export interface OrderRow {
+    id?: string; // Appears in Supabase
+    productId?: string; // Replaces name-based tracking
     ref: string;
     date: string;
     client: string;
@@ -12,6 +14,7 @@ export interface OrderRow {
 }
 
 export interface ProductData {
+    id: string;
     name: string;
     orders: OrderRow[];
 }
@@ -122,6 +125,8 @@ export async function fetchAllProducts(): Promise<ProductData[]> {
 
 // Ad Spend Row Structure
 export interface AdSpendRow {
+    id?: string;
+    productId?: string;
     product: string;
     from: string; // YYYY-MM-DD
     to: string;   // YYYY-MM-DD

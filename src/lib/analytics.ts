@@ -47,9 +47,9 @@ export interface StatusStat {
 /**
  * Helper to check if a product is selected (if filter is active)
  */
-function isProductSelected(productName: string, selectedProducts: string[]): boolean {
+function isProductSelected(productId: string, selectedProducts: string[]): boolean {
     if (selectedProducts.length === 0) return true; // No filter = all selected
-    return selectedProducts.includes(productName);
+    return selectedProducts.includes(productId);
 }
 
 /**
@@ -95,7 +95,7 @@ export function getDailyStats(
 
     // 1. Process Orders
     products.forEach(product => {
-        if (!isProductSelected(product.name, selectedProducts)) return;
+        if (!isProductSelected(product.id, selectedProducts)) return;
 
         product.orders.forEach(order => {
             const dateObj = parseDate(order.date);
@@ -133,7 +133,7 @@ export function getDailyStats(
 
     // 2. Process Ad Spend
     adSpendRows.forEach(row => {
-        if (!isProductSelected(row.product, selectedProducts)) return;
+        if (!isProductSelected(row.productId || '', selectedProducts)) return;
 
         const fromDate = new Date(row.from);
         const toDate = new Date(row.to);
@@ -195,7 +195,7 @@ export function getGlobalStats(
 
     // 1. Sum up product stats
     products.forEach(product => {
-        if (!isProductSelected(product.name, selectedProducts)) return;
+        if (!isProductSelected(product.id, selectedProducts)) return;
 
         const orders = product.orders; // These are already filtered by date in page.tsx? 
         // Important: page.tsx filters orders by date before passing here? 
@@ -222,7 +222,7 @@ export function getGlobalStats(
 
     // 2. Calculate Proportional Ad Spend
     adSpendRows.forEach(row => {
-        if (!isProductSelected(row.product, selectedProducts)) return;
+        if (!isProductSelected(row.productId || '', selectedProducts)) return;
 
         const rowFrom = new Date(row.from);
         const rowTo = new Date(row.to);

@@ -3,8 +3,8 @@
 import { Check } from 'lucide-react';
 
 interface ProductFilterProps {
-    products: string[];
-    selectedProducts: string[];
+    products: { id: string; name: string }[];
+    selectedProducts: string[]; // Now holds product IDs
     onChange: (selected: string[]) => void;
 }
 
@@ -20,16 +20,9 @@ export default function ProductFilter({ products, selectedProducts, onChange }: 
 
     const toggleAll = () => {
         if (selectedProducts.length === products.length) {
-            onChange([]); // Clear all (or maybe select none? Logic usually means "all" if empty, but here we want explicit select)
-            // Actually common UX: Empty = All. 
-            // But user request says "checkboxes ... When unchecked: Exclude product".
-            // So if all unchecked -> Show nothing? Or Show All?
-            // Let's assume:
-            // - Init state: All selected.
-            // - Unchecking removes it.
-            onChange([]);
+            onChange([]); 
         } else {
-            onChange([...products]);
+            onChange(products.map(p => p.id));
         }
     };
 
@@ -53,11 +46,11 @@ export default function ProductFilter({ products, selectedProducts, onChange }: 
             </button>
 
             {products.map((product) => {
-                const isSelected = selectedProducts.includes(product);
+                const isSelected = selectedProducts.includes(product.id);
                 return (
                     <button
-                        key={product}
-                        onClick={() => toggleProduct(product)}
+                        key={product.id}
+                        onClick={() => toggleProduct(product.id)}
                         className={`
               flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all border
               ${isSelected
@@ -67,7 +60,7 @@ export default function ProductFilter({ products, selectedProducts, onChange }: 
             `}
                     >
                         {isSelected && <Check className="w-3 h-3" />}
-                        {product}
+                        {product.name}
                     </button>
                 );
             })}

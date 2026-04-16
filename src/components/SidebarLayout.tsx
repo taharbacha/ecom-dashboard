@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import TopHeader from '@/components/TopHeader';
 import DashboardProvider from '@/context/DashboardProvider';
 
 const AUTH_KEY = 'ecom_dashboard_auth';
@@ -52,13 +53,16 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
 
     return (
         <DashboardProvider>
-            <div className="flex min-h-screen bg-slate-50">
+            <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
                 <Sidebar />
                 <main
-                    className="flex-1 min-h-screen transition-all duration-300"
+                    className="flex-1 flex flex-col min-h-screen transition-all duration-300 relative"
                     style={{ marginLeft: `${sidebarWidth}px` }}
                 >
-                    {children}
+                    <TopHeader />
+                    <div className="flex-1">
+                        {children}
+                    </div>
                 </main>
             </div>
         </DashboardProvider>

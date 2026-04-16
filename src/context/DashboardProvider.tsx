@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { fetchAllProducts, fetchAdSpend, ProductData, AdSpendRow } from '@/lib/sheets';
+import { ProductData, AdSpendRow } from '@/lib/sheets';
+import { fetchAllProducts, fetchAdSpend } from '@/lib/db';
 
 interface DashboardContextType {
     products: ProductData[];

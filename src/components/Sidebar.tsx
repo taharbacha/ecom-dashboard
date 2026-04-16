@@ -23,6 +23,12 @@ export function productSlug(name: string): string {
     return encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'));
 }
 
+export function productFromSlug(slug: string): string | undefined {
+    return PRODUCT_SHEETS.find(
+        (p) => productSlug(p) === slug
+    );
+}
+
 export default function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();

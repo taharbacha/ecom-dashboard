@@ -94,10 +94,11 @@ export default function ProductPage() {
     const dailyStats = useMemo(() => {
         if (!productData) return [];
         const filteredProduct = {
+            id: productData.id,
             name: productData.name,
             orders: filteredOrders,
         };
-        let stats = getDailyStats([filteredProduct], adSpendRows, [productData.name]);
+        let stats = getDailyStats([filteredProduct], adSpendRows, [productData.id]);
 
         if (startDate || endDate) {
             stats = stats.filter(s => {

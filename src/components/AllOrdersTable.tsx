@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDashboardData } from '@/context/DashboardProvider';
-import { Search, Filter, Download, Plus, MoreVertical, Calendar } from 'lucide-react';
+import { Search, Filter, Download, Plus, MoreVertical, Calendar, Info } from 'lucide-react';
 import { OrderRow } from '@/lib/sheets';
 import { updateSupplierPaymentStatus, getAllSupplierPaymentStatuses } from '@/lib/supplierPayments';
 
